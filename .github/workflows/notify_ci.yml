@@ -169,7 +169,5 @@ jobs:
 
       - name: Log notification result
         run: |
-          echo "Notification sent for workflow run ${{ steps.workflow.outputs.run_id }}"
+          echo "Notification workflow completed for run ${{ steps.workflow.outputs.run_id }}"
           echo "Status: ${{ steps.workflow.outputs.status }}"
-          echo "Slack configured: ${{ secrets.SLACK_WEBHOOK_URL != '' }}"
-          echo "Discord configured: ${{ secrets.DISCORD_WEBHOOK_URL != '' }}"
