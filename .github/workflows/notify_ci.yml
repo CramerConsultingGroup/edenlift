@@ -56,69 +56,116 @@ jobs:
       
       - name: Send Slack notification
         if: ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          STATUS_EMOJI: ${{ steps.status.outputs.emoji }}
+          STATUS_MESSAGE: ${{ steps.status.outputs.message }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ steps.workflow.outputs.branch }}
+          COMMIT: ${{ steps.workflow.outputs.commit }}
+          AUTHOR: ${{ steps.workflow.outputs.author }}
+          DURATION: ${{ steps.workflow.outputs.duration }}
+          RUN_ID: ${{ steps.workflow.outputs.run_id }}
+          RUN_NUMBER: ${{ steps.workflow.outputs.run_number }}
         run: |
-          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
-            -H 'Content-Type: application/json' \
-            -d '{
-              "text": "${{ steps.status.outputs.emoji }} *${{ steps.status.outputs.message }}*",
-              "blocks": [
+          jq -n \
+            --arg text "$STATUS_EMOJI *$STATUS_MESSAGE*" \
+            --arg emoji "$STATUS_EMOJI" \
+            --arg message "$STATUS_MESSAGE" \
+            --arg repo "$REPO" \
+            --arg branch "$BRANCH" \
+            --arg commit "$COMMIT" \
+            --arg author "$AUTHOR" \
+            --arg duration "$DURATION" \
+            --arg run_id "$RUN_ID" \
+            --arg run_number "$RUN_NUMBER" \
+            '{
+              text: $text,
+              blocks: [
                 {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "${{ steps.status.outputs.emoji }} *${{ steps.status.outputs.message }}*\n\n*Repository:* ${{ github.repository }}\n*Branch:* ${{ steps.workflow.outputs.branch }}\n*Commit:* <https://github.com/${{ github.repository }}/commit/${{ steps.workflow.outputs.commit }}|${{ steps.workflow.outputs.commit }}>\n*Author:* ${{ steps.workflow.outputs.author }}\n*Duration:* ${{ steps.workflow.outputs.duration }}"
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: "\($emoji) *\($message)*\n\n*Repository:* \($repo)\n*Branch:* \($branch)\n*Commit:* <https://github.com/\($repo)/commit/\($commit)|\($commit)>\n*Author:* \($author)\n*Duration:* \($duration)"
                   }
                 },
                 {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "📄 *Artifacts:* <https://github.com/${{ github.repository }}/actions/runs/${{ steps.workflow.outputs.run_id }}|View Run #${{ steps.workflow.outputs.run_number }}>"
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: "📄 *Artifacts:* <https://github.com/\($repo)/actions/runs/\($run_id)|View Run #\($run_number)>"
                   }
                 }
               ]
-            }'
+            }' | curl -X POST "$WEBHOOK_URL" \
+              -H 'Content-Type: application/json' \
+              -d @-
 
       - name: Send Discord notification
         if: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        env:
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          STATUS_EMOJI: ${{ steps.status.outputs.emoji }}
+          STATUS_MESSAGE: ${{ steps.status.outputs.message }}
+          STATUS_COLOR: ${{ steps.status.outputs.color }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ steps.workflow.outputs.branch }}
+          COMMIT: ${{ steps.workflow.outputs.commit }}
+          AUTHOR: ${{ steps.workflow.outputs.author }}
+          DURATION: ${{ steps.workflow.outputs.duration }}
+          RUN_ID: ${{ steps.workflow.outputs.run_id }}
+          RUN_NUMBER: ${{ steps.workflow.outputs.run_number }}
+          TIMESTAMP: ${{ github.event.workflow_run.updated_at }}
         run: |
-          curl -X POST ${{ secrets.DISCORD_WEBHOOK_URL }} \
-            -H 'Content-Type: application/json' \
-            -d '{
-              "embeds": [{
-                "title": "${{ steps.status.outputs.emoji }} ${{ steps.status.outputs.message }}",
-                "description": "Build workflow completed for **${{ github.repository }}**",
-                "color": ${{ steps.status.outputs.color }},
-                "fields": [
+          jq -n \
+            --arg emoji "$STATUS_EMOJI" \
+            --arg message "$STATUS_MESSAGE" \
+            --argjson color "$STATUS_COLOR" \
+            --arg repo "$REPO" \
+            --arg branch "$BRANCH" \
+            --arg commit "$COMMIT" \
+            --arg author "$AUTHOR" \
+            --arg duration "$DURATION" \
+            --arg run_id "$RUN_ID" \
+            --arg run_number "$RUN_NUMBER" \
+            --arg timestamp "$TIMESTAMP" \
+            '{
+              embeds: [{
+                title: "\($emoji) \($message)",
+                description: "Build workflow completed for **\($repo)**",
+                color: $color,
+                fields: [
                   {
-                    "name": "Branch",
-                    "value": "${{ steps.workflow.outputs.branch }}",
-                    "inline": true
+                    name: "Branch",
+                    value: $branch,
+                    inline: true
                   },
                   {
-                    "name": "Duration",
-                    "value": "${{ steps.workflow.outputs.duration }}",
-                    "inline": true
+                    name: "Duration",
+                    value: $duration,
+                    inline: true
                   },
                   {
-                    "name": "Commit",
-                    "value": "[`${{ steps.workflow.outputs.commit }}`](https://github.com/${{ github.repository }}/commit/${{ steps.workflow.outputs.commit }})",
-                    "inline": false
+                    name: "Commit",
+                    value: "[`\($commit)`](https://github.com/\($repo)/commit/\($commit))",
+                    inline: false
                   },
                   {
-                    "name": "Author",
-                    "value": "${{ steps.workflow.outputs.author }}",
-                    "inline": true
+                    name: "Author",
+                    value: $author,
+                    inline: true
                   },
                   {
-                    "name": "Artifacts",
-                    "value": "📄 [View Run #${{ steps.workflow.outputs.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ steps.workflow.outputs.run_id }})",
-                    "inline": false
+                    name: "Artifacts",
+                    value: "📄 [View Run #\($run_number)](https://github.com/\($repo)/actions/runs/\($run_id))",
+                    inline: false
                   }
                 ],
-                "timestamp": "${{ github.event.workflow_run.updated_at }}"
+                timestamp: $timestamp
               }]
-            }'
+            }' | curl -X POST "$WEBHOOK_URL" \
+              -H 'Content-Type: application/json' \
+              -d @-
 
       - name: Log notification result
         run: |
