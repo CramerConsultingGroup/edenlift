@@ -9,7 +9,23 @@ echo ""
 echo "🚀 Starting web server on port 8001..."
 python3 -m http.server 8001 > /dev/null 2>&1 &
 SERVER_PID=$!
-sleep 2
+
+# Wait for server to be ready with retry mechanism
+MAX_RETRIES=10
+RETRY_COUNT=0
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8001/ > /dev/null 2>&1; then
+        echo "✅ Server ready on port 8001"
+        break
+    fi
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    sleep 1
+done
+
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+    echo "❌ Server failed to start"
+    exit 1
+fi
 
 # Function to test a URL
 test_url() {
@@ -47,10 +63,15 @@ echo "  - CSS files: $(find . -name '*.css' | wc -l)"
 echo "  - Total lines (HTML): $(find . -name '*.html' -exec wc -l {} + | tail -1 | awk '{print $1}')"
 echo "  - Total lines (CSS): $(find . -name '*.css' -exec wc -l {} + | tail -1 | awk '{print $1}')"
 
-# Stop the server
+# Stop the server with verification
 echo ""
 echo "🛑 Stopping web server..."
-kill $SERVER_PID 2>/dev/null
+if kill $SERVER_PID 2>/dev/null; then
+    wait $SERVER_PID 2>/dev/null
+    echo "✅ Server stopped successfully"
+else
+    echo "⚠️ Server was already stopped"
+fi
 
 echo ""
 echo "✅ All tests completed successfully!"
