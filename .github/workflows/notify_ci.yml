@@ -1,0 +1,173 @@
+name: CI Notifications
+
+on:
+  workflow_run:
+    workflows: ["Build Documentation Test"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get workflow run details
+        id: workflow
+        env:
+          AUTHOR_NAME: ${{ github.event.workflow_run.head_commit.author.name }}
+          BRANCH_NAME: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          echo "status=${{ github.event.workflow_run.conclusion }}" >> $GITHUB_OUTPUT
+          echo "run_id=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
+          echo "run_number=${{ github.event.workflow_run.run_number }}" >> $GITHUB_OUTPUT
+          echo "commit=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+          echo "author=${AUTHOR_NAME}" >> $GITHUB_OUTPUT
+          echo "branch=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+
+          # Calculate duration
+          started_at="${{ github.event.workflow_run.created_at }}"
+          completed_at="${{ github.event.workflow_run.updated_at }}"
+          start_epoch=$(date -d "$started_at" +%s)
+          end_epoch=$(date -d "$completed_at" +%s)
+          duration=$((end_epoch - start_epoch))
+          echo "duration=${duration}s" >> $GITHUB_OUTPUT
+
+      - name: Set status emoji and message
+        id: status
+        run: |
+          if [ "${{ steps.workflow.outputs.status }}" == "success" ]; then
+            echo "emoji=✅" >> $GITHUB_OUTPUT
+            echo "message=Build Succeeded" >> $GITHUB_OUTPUT
+            echo "color=3066993" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.workflow.outputs.status }}" == "failure" ]; then
+            echo "emoji=❌" >> $GITHUB_OUTPUT
+            echo "message=Build Failed" >> $GITHUB_OUTPUT
+            echo "color=15158332" >> $GITHUB_OUTPUT
+          else
+            echo "emoji=⚠️" >> $GITHUB_OUTPUT
+            echo "message=Build ${{ steps.workflow.outputs.status }}" >> $GITHUB_OUTPUT
+            echo "color=16776960" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Send Slack notification
+        if: ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          STATUS_EMOJI: ${{ steps.status.outputs.emoji }}
+          STATUS_MESSAGE: ${{ steps.status.outputs.message }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ steps.workflow.outputs.branch }}
+          COMMIT: ${{ steps.workflow.outputs.commit }}
+          AUTHOR: ${{ steps.workflow.outputs.author }}
+          DURATION: ${{ steps.workflow.outputs.duration }}
+          RUN_ID: ${{ steps.workflow.outputs.run_id }}
+          RUN_NUMBER: ${{ steps.workflow.outputs.run_number }}
+        run: |
+          jq -n \
+            --arg text "$STATUS_EMOJI *$STATUS_MESSAGE*" \
+            --arg emoji "$STATUS_EMOJI" \
+            --arg message "$STATUS_MESSAGE" \
+            --arg repo "$REPO" \
+            --arg branch "$BRANCH" \
+            --arg commit "$COMMIT" \
+            --arg author "$AUTHOR" \
+            --arg duration "$DURATION" \
+            --arg run_id "$RUN_ID" \
+            --arg run_number "$RUN_NUMBER" \
+            '{
+              text: $text,
+              blocks: [
+                {
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: "\($emoji) *\($message)*\n\n*Repository:* \($repo)\n*Branch:* \($branch)\n*Commit:* <https://github.com/\($repo)/commit/\($commit)|\($commit)>\n*Author:* \($author)\n*Duration:* \($duration)"
+                  }
+                },
+                {
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: "📄 *Artifacts:* <https://github.com/\($repo)/actions/runs/\($run_id)|View Run #\($run_number)>"
+                  }
+                }
+              ]
+            }' | curl -X POST "$WEBHOOK_URL" \
+              -H 'Content-Type: application/json' \
+              -d @-
+
+      - name: Send Discord notification
+        if: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        env:
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          STATUS_EMOJI: ${{ steps.status.outputs.emoji }}
+          STATUS_MESSAGE: ${{ steps.status.outputs.message }}
+          STATUS_COLOR: ${{ steps.status.outputs.color }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ steps.workflow.outputs.branch }}
+          COMMIT: ${{ steps.workflow.outputs.commit }}
+          AUTHOR: ${{ steps.workflow.outputs.author }}
+          DURATION: ${{ steps.workflow.outputs.duration }}
+          RUN_ID: ${{ steps.workflow.outputs.run_id }}
+          RUN_NUMBER: ${{ steps.workflow.outputs.run_number }}
+          TIMESTAMP: ${{ github.event.workflow_run.updated_at }}
+        run: |
+          jq -n \
+            --arg emoji "$STATUS_EMOJI" \
+            --arg message "$STATUS_MESSAGE" \
+            --argjson color "$STATUS_COLOR" \
+            --arg repo "$REPO" \
+            --arg branch "$BRANCH" \
+            --arg commit "$COMMIT" \
+            --arg author "$AUTHOR" \
+            --arg duration "$DURATION" \
+            --arg run_id "$RUN_ID" \
+            --arg run_number "$RUN_NUMBER" \
+            --arg timestamp "$TIMESTAMP" \
+            '{
+              embeds: [{
+                title: "\($emoji) \($message)",
+                description: "Build workflow completed for **\($repo)**",
+                color: $color,
+                fields: [
+                  {
+                    name: "Branch",
+                    value: $branch,
+                    inline: true
+                  },
+                  {
+                    name: "Duration",
+                    value: $duration,
+                    inline: true
+                  },
+                  {
+                    name: "Commit",
+                    value: "[`\($commit)`](https://github.com/\($repo)/commit/\($commit))",
+                    inline: false
+                  },
+                  {
+                    name: "Author",
+                    value: $author,
+                    inline: true
+                  },
+                  {
+                    name: "Artifacts",
+                    value: "📄 [View Run #\($run_number)](https://github.com/\($repo)/actions/runs/\($run_id))",
+                    inline: false
+                  }
+                ],
+                timestamp: $timestamp
+              }]
+            }' | curl -X POST "$WEBHOOK_URL" \
+              -H 'Content-Type: application/json' \
+              -d @-
+
+      - name: Log notification result
+        run: |
+          echo "Notification workflow completed for run ${{ steps.workflow.outputs.run_id }}"
+          echo "Status: ${{ steps.workflow.outputs.status }}"
