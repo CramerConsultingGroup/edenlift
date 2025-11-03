@@ -1,34 +1,54 @@
-# Gradle files
-.gradle/
-build/
+# Eden Lift - Git Ignore
 
-# Local configuration file (sdk path, etc)
-local.properties
-
-# Log/OS Files
+# OS Files
+.DS_Store
+Thumbs.db
 *.log
+*~
 
-# Android Studio generated files and folders
-captures/
-.externalNativeBuild/
-.cxx/
-*.aab
-*.apk
-output-metadata.json
-
-# IntelliJ
-*.iml
+# Editor directories and files
+.vscode/
 .idea/
-misc.xml
-deploymentTargetDropDown.xml
-render.experimental.xml
+*.swp
+*.swo
+*.swn
+*.bak
 
-# Keystore files
-*.jks
-*.keystore
+# Node modules (if npm is used in future)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
 
-# Google Services (e.g. APIs or Firebase)
-google-services.json
+# Build outputs and cache
+dist/
+build/
+.cache/
+*.min.js
+*.min.css
 
-# Android Profiling
-*.hprof
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Temporary test files
+/tmp/
+*.tmp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.Python
+
+# Deployment
+.vercel
+.netlify
+.firebase/
+
+# Keep deployment guide
+!DEPLOYMENT.md
