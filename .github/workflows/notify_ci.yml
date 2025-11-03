@@ -49,7 +49,7 @@ jobs:
           fi
       
       - name: Send Slack notification
-        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        if: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
             -H 'Content-Type: application/json' \
@@ -72,11 +72,9 @@ jobs:
                 }
               ]
             }'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      
+
       - name: Send Discord notification
-        if: ${{ secrets.DISCORD_WEBHOOK_URL != '' }}
+        if: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           curl -X POST ${{ secrets.DISCORD_WEBHOOK_URL }} \
             -H 'Content-Type: application/json' \
@@ -115,12 +113,10 @@ jobs:
                 "timestamp": "${{ github.event.workflow_run.updated_at }}"
               }]
             }'
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-      
+
       - name: Log notification result
         run: |
           echo "Notification sent for workflow run ${{ steps.workflow.outputs.run_id }}"
           echo "Status: ${{ steps.workflow.outputs.status }}"
-          echo "Slack notified: ${{ secrets.SLACK_WEBHOOK_URL != '' }}"
-          echo "Discord notified: ${{ secrets.DISCORD_WEBHOOK_URL != '' }}"
+          echo "Slack configured: ${{ secrets.SLACK_WEBHOOK_URL != '' }}"
+          echo "Discord configured: ${{ secrets.DISCORD_WEBHOOK_URL != '' }}"
