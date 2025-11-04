@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - Eden Lift</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+    <nav class="copper-nav" aria-label="Main menu">
+        <ul>
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="../investor/index.html">Investor</a></li>
+            <li><a href="../docs/index.html">Docs</a></li>
+            <li><a href="../signatures/index.html">Signatures</a></li>
+            <li><a href="index.html" class="active">API</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <header class="hero">
+            <h1>🔌 API Documentation</h1>
+            <p class="tagline">Integrate Eden Lift Into Your Applications</p>
+        </header>
+
+        <section>
+            <h2>Overview</h2>
+            <p>The Eden Lift API provides programmatic access to our platform's core functionality. Build integrations, automate workflows, and create custom applications on top of our infrastructure.</p>
+        </section>
+
+        <section>
+            <h2>Quick Start</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🔑 Authentication</h3>
+                    <p>Secure API key-based authentication with optional OAuth2 support.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📡 RESTful Design</h3>
+                    <p>Standard REST endpoints with JSON request/response format.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📊 Rate Limits</h3>
+                    <p>Generous rate limits with webhook support for real-time updates.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🛠 SDKs Available</h3>
+                    <p>Client libraries for Python, JavaScript, Java, and more.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Base URL</h2>
+            <pre style="background: #f4f4f4; padding: 1em; border-radius: 4px; overflow-x: auto;">
+https://api.edenlift.org/v1
+            </pre>
+        </section>
+
+        <section>
+            <h2>Authentication</h2>
+            <p>All API requests require authentication using an API key passed in the Authorization header:</p>
+            <pre style="background: #f4f4f4; padding: 1em; border-radius: 4px; overflow-x: auto;">
+Authorization: Bearer YOUR_API_KEY
+            </pre>
+        </section>
+
+        <section>
+            <h2>API Endpoints</h2>
+            
+            <h3>Projects</h3>
+            <ul>
+                <li><code>GET /projects</code> - List all projects</li>
+                <li><code>GET /projects/{id}</code> - Get project details</li>
+                <li><code>POST /projects</code> - Create a new project</li>
+                <li><code>PUT /projects/{id}</code> - Update project</li>
+                <li><code>DELETE /projects/{id}</code> - Delete project</li>
+            </ul>
+
+            <h3>Investments</h3>
+            <ul>
+                <li><code>GET /investments</code> - List investments</li>
+                <li><code>GET /investments/{id}</code> - Get investment details</li>
+                <li><code>POST /investments</code> - Create investment</li>
+                <li><code>GET /investments/{id}/analytics</code> - Get investment analytics</li>
+            </ul>
+
+            <h3>Documents</h3>
+            <ul>
+                <li><code>GET /documents</code> - List documents</li>
+                <li><code>POST /documents</code> - Upload document</li>
+                <li><code>GET /documents/{id}</code> - Get document details</li>
+                <li><code>POST /documents/{id}/sign</code> - Sign document</li>
+                <li><code>GET /documents/{id}/verify</code> - Verify signature</li>
+            </ul>
+
+            <h3>Analytics</h3>
+            <ul>
+                <li><code>GET /analytics/impact</code> - Get impact metrics</li>
+                <li><code>GET /analytics/financial</code> - Get financial data</li>
+                <li><code>GET /analytics/trends</code> - Get trend analysis</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Example Request</h2>
+            <pre style="background: #f4f4f4; padding: 1em; border-radius: 4px; overflow-x: auto;">
+curl -X GET "https://api.edenlift.org/v1/projects" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json"
+            </pre>
+        </section>
+
+        <section>
+            <h2>Response Format</h2>
+            <p>All API responses follow this standard format:</p>
+            <pre style="background: #f4f4f4; padding: 1em; border-radius: 4px; overflow-x: auto;">
+{
+  "success": true,
+  "data": { ... },
+  "message": "Success",
+  "timestamp": "2025-11-03T23:17:20Z"
+}
+            </pre>
+        </section>
+
+        <section>
+            <h2>Error Handling</h2>
+            <p>Error responses include standard HTTP status codes and detailed error messages:</p>
+            <ul>
+                <li><code>400</code> - Bad Request</li>
+                <li><code>401</code> - Unauthorized</li>
+                <li><code>403</code> - Forbidden</li>
+                <li><code>404</code> - Not Found</li>
+                <li><code>429</code> - Rate Limit Exceeded</li>
+                <li><code>500</code> - Internal Server Error</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>SDKs & Libraries</h2>
+            <p>Official client libraries are available:</p>
+            <ul>
+                <li><strong>Python:</strong> <code>pip install edenlift-sdk</code></li>
+                <li><strong>JavaScript/Node.js:</strong> <code>npm install edenlift-sdk</code></li>
+                <li><strong>Java:</strong> Maven/Gradle dependencies available</li>
+                <li><strong>Go:</strong> <code>go get github.com/edenlift/go-sdk</code></li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Support</h2>
+            <p>Need help with the API?</p>
+            <ul>
+                <li><strong>Email:</strong> api-support@edenlift.org</li>
+                <li><strong>Developer Forum:</strong> forum.edenlift.org</li>
+                <li><strong>GitHub:</strong> github.com/CramerConsultingGroup/edenlift</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Cramer Consulting Group - Eden Lift. All rights reserved.</p>
+    </footer>
+</body>
+</html>
