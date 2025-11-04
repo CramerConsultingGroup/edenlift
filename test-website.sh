@@ -60,8 +60,8 @@ echo ""
 echo "📊 Project Statistics:"
 echo "  - HTML pages: $(find . -name '*.html' | wc -l)"
 echo "  - CSS files: $(find . -name '*.css' | wc -l)"
-echo "  - Total lines (HTML): $(find . -name '*.html' -exec wc -l {} + | tail -1 | awk '{print $1}')"
-echo "  - Total lines (CSS): $(find . -name '*.css' -exec wc -l {} + | tail -1 | awk '{print $1}')"
+echo "  - Total lines (HTML): $(find . -name '*.html' -exec cat {} + | wc -l)"
+echo "  - Total lines (CSS): $(find . -name '*.css' -exec cat {} + | wc -l)"
 
 # Stop the server with verification
 echo ""
