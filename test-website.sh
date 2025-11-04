@@ -14,7 +14,8 @@ SERVER_PID=$!
 MAX_RETRIES=10
 RETRY_COUNT=0
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8001/ > /dev/null 2>&1; then
+    status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8001/)
+    if [ "$status" = "200" ]; then
         echo "✅ Server ready on port 8001"
         break
     fi
