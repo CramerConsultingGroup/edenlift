@@ -66,7 +66,7 @@ edenlift/
 │   └── index.html          # Digital signature platform
 ├── api/
 │   └── index.html          # API documentation
-├── LICENSE                 # MIT License
+├── LICENSE                 # Unlicense (public domain)
 ├── README.md              # This file
 └── .gitignore             # Git ignore rules
 ```
